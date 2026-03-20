@@ -1,0 +1,24 @@
+{
+  "name": "DevOps Tracker — 12 Month Plan",
+  "short_name": "DevOps Tracker",
+  "description": "DevOps engineer 12-month daily study tracker",
+  "start_url": "./devops_tracker.html",
+  "display": "standalone",
+  "background_color": "#f5f5f0",
+  "theme_color": "#0F6E56",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-devops.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-devops.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

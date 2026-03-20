@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DevOps Tracker</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="DevOps Tracker">
+<meta name="theme-color" content="#0F6E56">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f0;padding:env(safe-area-inset-top,16px) 16px env(safe-area-inset-bottom,16px);color:#1a1a18;min-height:100vh}
+#app{max-width:720px;margin:0 auto;background:#fff;border-radius:16px;padding:20px;border:0.5px solid #d3d1c7}
+@media(max-width:480px){body{padding:12px 10px}#app{border-radius:12px;padding:14px}}
+h1{font-size:18px;font-weight:500;margin-bottom:4px;color:#1a1a18}
+.subtitle{font-size:12px;color:#5f5e5a;margin-bottom:16px}
+.top-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.phase-pill{padding:5px 12px;border-radius:99px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid transparent;transition:all .15s;white-space:nowrap}
+.phase-pill.active{border-color:currentColor}
+.p1{background:#E1F5EE;color:#085041}.p2{background:#EEEDFE;color:#3C3489}
+.p3{background:#FAEEDA;color:#633806}.p4{background:#FAECE7;color:#4A1B0C}
+.p5{background:#E6F1FB;color:#042C53}.p6{background:#FBEAF0;color:#72243E}
+.phase-hero{border-radius:12px;padding:14px 16px;margin-bottom:14px;border:1px solid transparent}
+.phase-hero-title{font-size:15px;font-weight:500;margin-bottom:2px}
+.phase-hero-meta{font-size:12px;opacity:.75;margin-bottom:10px}
+.stats-row{display:flex;gap:8px;flex-wrap:wrap}
+.stat-chip{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:500}
+.weeks-grid{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+.week-block{border-radius:10px;overflow:hidden;border:0.5px solid #d3d1c7}
+.week-header-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;background:#f5f5f0;user-select:none}
+.week-title{font-size:12px;font-weight:500;color:#1a1a18}
+.week-subtitle{font-size:11px;color:#5f5e5a}
+.week-toggle{font-size:11px;color:#888780}
+.days-list{display:none;flex-direction:column}
+.days-list.open{display:flex}
+.day-item{display:grid;grid-template-columns:38px 1fr auto;gap:8px;align-items:start;padding:8px 12px;border-top:0.5px solid #e8e6e0;transition:opacity .2s}
+.day-label{font-size:11px;font-weight:500;color:#5f5e5a;padding-top:2px}
+.day-topic{font-size:12px;font-weight:500;color:#1a1a18;margin-bottom:2px}
+.day-detail{font-size:11px;color:#5f5e5a;line-height:1.5}
+.day-link{color:#185FA5;font-size:11px;text-decoration:none}
+.day-link:hover{text-decoration:underline}
+.done-btn{font-size:10px;padding:3px 8px;border-radius:99px;border:0.5px solid #b4b2a9;background:transparent;cursor:pointer;color:#5f5e5a;white-space:nowrap;transition:all .15s;margin-top:2px}
+.done-btn.done{background:#eaf3de;color:#3B6D11;border-color:#639922}
+.progress-wrap{margin-bottom:16px}
+.progress-label{font-size:12px;color:#5f5e5a;margin-bottom:5px;display:flex;justify-content:space-between}
+.progress-track{background:#f5f5f0;border-radius:99px;height:5px;overflow:hidden}
+.progress-fill{height:100%;border-radius:99px;transition:width .4s}
+@media(prefers-color-scheme:dark){
+  body{background:#1a1a18;color:#e8e6e0}
+  #app{background:#2c2c2a;border-color:#444441}
+  .week-header-row,.progress-track{background:#3d3d3a}
+  .day-item{border-top-color:#444441}
+  .week-block{border-color:#444441}
+  .week-title,.day-topic{color:#e8e6e0}
+  .week-subtitle,.day-detail,.day-label,.progress-label{color:#9c9a92}
+  .done-btn{color:#9c9a92;border-color:#5f5e5a}
+  h1{color:#e8e6e0}.subtitle{color:#9c9a92}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbw2k1uuZ152jDmmGRzs6mw0fTFs6GBmxNjB-NnrGb2-v1jLN66kLr-_EoGY_C9QYwWh/exec';
+
+const PHASES=[
+{id:'p1',label:'Phase 1',name:'Linux & Git fundamentals',months:'Month 1–2 (Weeks 1–8)',color:'#0F6E56',bg:'#E1F5EE',tc:'#085041',
+stats:['Linux CLI mastery','Git & GitHub','Shell scripting','OverTheWire + labs'],
+weeks:[
+{label:'Week 1',topic:'Linux basics — filesystem, navigation, permissions',days:[
+{d:'Mon',t:'What is Linux + distributions overview',det:'Watch TechWorld with Nana Linux intro. Understand kernel, distros.',url:'https://www.youtube.com/watch?v=ROjZy1WbCIA'},
+{d:'Tue',t:'Linux filesystem hierarchy + navigation',det:'cd, ls, pwd, find, tree. Navigate without GUI.',url:'https://linuxjourney.com'},
+{d:'Wed',t:'File permissions + ownership + chmod',det:'chmod 755, chown, chgrp. Create files and set permissions.',url:'https://linuxjourney.com'},
+{d:'Thu',t:'Users, groups, sudo + process management',det:'adduser, ps, top, kill, systemctl basics.',url:'https://linuxjourney.com'},
+{d:'Fri',t:'OverTheWire Bandit levels 0–5',det:'Apply Linux skills. Solve CTF-style Linux challenges.',url:'https://overthewire.org/wargames/bandit/'},
+]},
+{label:'Week 2',topic:'Linux networking + shell basics',days:[
+{d:'Mon',t:'Networking commands: ip, netstat, ss, curl',det:'Run each command. Map output to OSI model layers.',url:'https://linuxjourney.com'},
+{d:'Tue',t:'Package management: apt, yum, dnf',det:'Install nginx, python3, git on Ubuntu VM.',url:'https://linuxjourney.com'},
+{d:'Wed',t:'Text processing: grep, awk, sed, cut',det:'Parse a log file. Extract IPs, count errors.',url:'https://linuxjourney.com'},
+{d:'Thu',t:'Shell scripting — Part 1: variables, loops',det:'Write 3 bash scripts: hello world, file backup, log parser.',url:'https://www.shellscript.sh'},
+{d:'Fri',t:'OverTheWire Bandit levels 6–12',det:'Continue Bandit. Focus on grep, find, file redirection.',url:'https://overthewire.org/wargames/bandit/'},
+]},
+{label:'Week 3',topic:'Advanced shell scripting',days:[
+{d:'Mon',t:'Shell scripting — conditionals + functions',det:'Write script: check if service is running, restart if not.',url:'https://www.shellscript.sh'},
+{d:'Tue',t:'Cron jobs + scheduled tasks',det:'Schedule 3 cron jobs. Automate a log cleanup script.',url:'https://crontab.guru'},
+{d:'Wed',t:'SSH + key-based authentication',det:'Generate SSH keys. Connect to a cloud VM without password.',url:'https://www.digitalocean.com/community/tutorials/ssh-essentials-working-with-ssh-servers-clients-and-keys'},
+{d:'Thu',t:'Linux system monitoring: vmstat, iostat, df',det:'Monitor CPU, memory, disk. Write a health check script.',url:'https://linuxjourney.com'},
+{d:'Fri',t:'OverTheWire Bandit levels 13–20',det:'Advanced Bandit. Focus on SSH, binary, permissions.',url:'https://overthewire.org/wargames/bandit/'},
+]},
+{label:'Week 4',topic:'Git & GitHub — version control',days:[
+{d:'Mon',t:'Git init, add, commit, status, log',det:'Watch TechWorld Nana Git tutorial. Create first repo.',url:'https://www.youtube.com/watch?v=RGOj5yH7evk'},
+{d:'Tue',t:'Git branching + merging + conflicts',det:'Create branches, merge, resolve a conflict.',url:'https://learngitbranching.js.org'},
+{d:'Wed',t:'Git remote + push + pull + fetch',det:'Push local repo to GitHub. Clone a repo. Submit a PR.',url:'https://learngitbranching.js.org'},
+{d:'Thu',t:'Git rebase + cherry-pick + stash',det:'Practice rebase vs merge. Use stash to save work.',url:'https://learngitbranching.js.org'},
+{d:'Fri',t:'GitHub Actions intro — first workflow',det:'Create a simple GitHub Actions workflow that runs on push.',url:'https://docs.github.com/en/actions'},
+]},
+{label:'Week 5',topic:'Git workflows + advanced GitHub',days:[
+{d:'Mon',t:'Git Flow vs Trunk Based Development',det:'Read about both workflows. Understand when to use each.',url:'https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow'},
+{d:'Tue',t:'GitHub: Issues, Projects, Pull Requests',det:'Open an issue, link a PR, merge with squash.',url:'https://docs.github.com/en/issues'},
+{d:'Wed',t:'GitHub Actions — multi-step pipeline',det:'Build pipeline: checkout → test → build → notify.',url:'https://docs.github.com/en/actions'},
+{d:'Thu',t:'Pre-commit hooks + linting automation',det:'Add pre-commit hooks using husky or shell scripts.',url:'https://pre-commit.com'},
+{d:'Fri',t:'Review + push all week scripts to GitHub',det:'Create devops-scripts repo. Clean README for each.',url:'https://github.com'},
+]},
+{label:'Week 6',topic:'Python scripting for DevOps',days:[
+{d:'Mon',t:'Python basics: variables, loops, functions',det:'Complete Python for DevOps intro on freeCodeCamp.',url:'https://www.freecodecamp.org/learn/scientific-computing-with-python/'},
+{d:'Tue',t:'Python: file I/O + JSON + YAML parsing',det:'Write script to parse a YAML config and JSON API response.',url:'https://automatetheboringstuff.com'},
+{d:'Wed',t:'Python: subprocess + os module',det:'Run shell commands from Python. Automate server checks.',url:'https://automatetheboringstuff.com'},
+{d:'Thu',t:'Python: requests library + REST APIs',det:'Call a public REST API. Parse the response. Log results.',url:'https://docs.python-requests.org'},
+{d:'Fri',t:'Python: boto3 intro (AWS SDK)',det:'Install boto3. List S3 buckets and EC2 instances (free tier).',url:'https://boto3.amazonaws.com/v1/documentation/api/latest/index.html'},
+]},
+{label:'Week 7',topic:'Networking fundamentals for DevOps',days:[
+{d:'Mon',t:'TCP/IP, DNS, HTTP/S for DevOps context',det:'Understand how web requests flow through infra.',url:'https://www.cloudflare.com/learning/'},
+{d:'Tue',t:'Load balancers + reverse proxies',det:'Install Nginx on VM. Configure as reverse proxy.',url:'https://nginx.org/en/docs/beginners_guide.html'},
+{d:'Wed',t:'Firewalls + security groups + iptables',det:'Configure UFW on Ubuntu. Open/close ports.',url:'https://www.digitalocean.com/community/tutorials/ufw-essentials-common-firewall-rules-and-commands'},
+{d:'Thu',t:'VPC + subnets + NAT (cloud networking)',det:'Read AWS VPC docs. Draw a basic 3-tier network diagram.',url:'https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html'},
+{d:'Fri',t:'Review Phase 1 foundations + quiz yourself',det:'Can you explain: SSH, git rebase, cron, chmod 755?',url:'https://github.com'},
+]},
+{label:'Week 8',topic:'Linux + Git revision + mini project',days:[
+{d:'Mon',t:'Mini project: automated server setup script',det:'Write bash script: installs nginx, creates user, sets firewall.',url:'https://github.com'},
+{d:'Tue',t:'Mini project: git-based deploy script',det:'Script that pulls latest git main branch and restarts nginx.',url:'https://github.com'},
+{d:'Wed',t:'Mini project: system health monitor',det:'Python script: checks CPU, disk, memory. Emails alert if high.',url:'https://github.com'},
+{d:'Thu',t:'Push all 3 mini projects to GitHub',det:'Add README with architecture diagram description.',url:'https://github.com'},
+{d:'Fri',t:'Review + fill gaps from weeks 1–8',det:'Re-read notes. List 5 things you still feel unsure about.',url:'https://linuxjourney.com'},
+]},
+]},
+
+{id:'p2',label:'Phase 2',name:'Docker & containerisation',months:'Month 3–4 (Weeks 9–16)',color:'#534AB7',bg:'#EEEDFE',tc:'#3C3489',
+stats:['Docker fundamentals','Docker Compose','Container networking','Registry & images'],
+weeks:[
+{label:'Week 9',topic:'Docker fundamentals',days:[
+{d:'Mon',t:'What is Docker + containers vs VMs',det:'Watch TechWorld Nana Docker tutorial part 1.',url:'https://www.youtube.com/watch?v=3c-iBn73dDE'},
+{d:'Tue',t:'Docker install + first container',det:'Install Docker on Ubuntu VM. Run hello-world and nginx.',url:'https://docs.docker.com/get-started/'},
+{d:'Wed',t:'Docker images + containers + layers',det:'Pull, run, stop, rm containers. Inspect image layers.',url:'https://docs.docker.com/get-started/'},
+{d:'Thu',t:'Docker run flags: -p, -v, -e, -d, --name',det:'Run nginx with port mapping. Mount a volume.',url:'https://docs.docker.com/engine/reference/run/'},
+{d:'Fri',t:'KodeKloud Docker free lab',det:'Complete KodeKloud free Docker labs in browser.',url:'https://kodekloud.com/courses/labs-docker-for-the-absolute-beginner/'},
+]},
+{label:'Week 10',topic:'Dockerfile + building images',days:[
+{d:'Mon',t:'Writing a Dockerfile — basics',det:'Write Dockerfile for a Python Flask app. Build and run.',url:'https://docs.docker.com/engine/reference/builder/'},
+{d:'Tue',t:'Dockerfile best practices + multi-stage builds',det:'Reduce image size using multi-stage. Compare before/after.',url:'https://docs.docker.com/develop/develop-images/multistage-build/'},
+{d:'Wed',t:'Docker build + tag + push to Docker Hub',det:'Create Docker Hub account. Push your Flask image.',url:'https://hub.docker.com'},
+{d:'Thu',t:'Docker networking: bridge, host, overlay',det:'Create custom networks. Connect 2 containers.',url:'https://docs.docker.com/network/'},
+{d:'Fri',t:'Docker volumes + bind mounts + tmpfs',det:'Persist MySQL data with a named volume.',url:'https://docs.docker.com/storage/volumes/'},
+]},
+{label:'Week 11',topic:'Docker Compose',days:[
+{d:'Mon',t:'Docker Compose intro + YAML format',det:'Watch TechWorld Nana Docker Compose tutorial.',url:'https://www.youtube.com/watch?v=SXwC9fSwct8'},
+{d:'Tue',t:'Docker Compose: multi-container app',det:'Run WordPress + MySQL using docker-compose.yml.',url:'https://docs.docker.com/compose/'},
+{d:'Wed',t:'Docker Compose: networks + volumes + env vars',det:'Add custom networks and named volumes to Compose file.',url:'https://docs.docker.com/compose/compose-file/'},
+{d:'Thu',t:'Docker Compose: health checks + depends_on',det:'Add health check to MySQL. Make app wait for DB ready.',url:'https://docs.docker.com/compose/compose-file/compose-file-v3/'},
+{d:'Fri',t:'Mini project: Dockerise a Node.js app',det:'Containerise a sample Node.js app with Compose + Nginx.',url:'https://github.com'},
+]},
+{label:'Week 12',topic:'Container security + registry',days:[
+{d:'Mon',t:'Container security best practices',det:'Non-root user, read-only FS, no latest tag, image scanning.',url:'https://docs.docker.com/develop/security-best-practices/'},
+{d:'Tue',t:'Trivy image scanning',det:'Install Trivy free. Scan your images for CVEs.',url:'https://github.com/aquasecurity/trivy'},
+{d:'Wed',t:'Private Docker registry setup',det:'Run a local Docker registry container. Push and pull images.',url:'https://docs.docker.com/registry/'},
+{d:'Thu',t:'Docker resource limits: CPU + memory',det:'Set --cpus and --memory limits. Test with stress tool.',url:'https://docs.docker.com/config/containers/resource_constraints/'},
+{d:'Fri',t:'Review + Docker Compose mini project v2',det:'Add Trivy scan step to your Compose project.',url:'https://github.com'},
+]},
+{label:'Week 13',topic:'Kubernetes intro — core concepts',days:[
+{d:'Mon',t:'What is Kubernetes + architecture overview',det:'Watch TechWorld Nana K8s intro. Understand master + worker.',url:'https://www.youtube.com/watch?v=X48VuDVv0do'},
+{d:'Tue',t:'Install minikube + kubectl locally',det:'Install minikube. Start cluster. Run first pod.',url:'https://minikube.sigs.k8s.io/docs/start/'},
+{d:'Wed',t:'Pods + Deployments + ReplicaSets',det:'Create deployment. Scale to 3 replicas. Delete a pod.',url:'https://kubernetes.io/docs/tutorials/'},
+{d:'Thu',t:'Services: ClusterIP, NodePort, LoadBalancer',det:'Expose your deployment. Access via NodePort.',url:'https://kubernetes.io/docs/concepts/services-networking/service/'},
+{d:'Fri',t:'KodeKloud Kubernetes free lab',det:'Complete KodeKloud free K8s labs in browser.',url:'https://kodekloud.com/courses/labs-kubernetes-for-the-absolute-beginner-hands-on/'},
+]},
+{label:'Week 14',topic:'Kubernetes — config + storage + namespaces',days:[
+{d:'Mon',t:'ConfigMaps + Secrets',det:'Create ConfigMap for app config. Store DB password in Secret.',url:'https://kubernetes.io/docs/concepts/configuration/'},
+{d:'Tue',t:'Namespaces + resource quotas',det:'Create dev and prod namespaces. Set resource quotas.',url:'https://kubernetes.io/docs/concepts/policy/resource-quotas/'},
+{d:'Wed',t:'Persistent Volumes + PVCs',det:'Create PV and PVC. Mount to a MySQL pod.',url:'https://kubernetes.io/docs/concepts/storage/persistent-volumes/'},
+{d:'Thu',t:'Liveness + readiness probes',det:'Add HTTP probes to deployment. Test failure behaviour.',url:'https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/'},
+{d:'Fri',t:'Deploy your Dockerised app to K8s',det:'Take your Docker Compose app and deploy to minikube.',url:'https://github.com'},
+]},
+{label:'Week 15',topic:'Kubernetes — RBAC + Helm',days:[
+{d:'Mon',t:'RBAC: roles, rolebindings, service accounts',det:'Create a read-only role. Bind to a service account.',url:'https://kubernetes.io/docs/reference/access-authn-authz/rbac/'},
+{d:'Tue',t:'Helm package manager intro',det:'Install Helm. Deploy nginx-ingress via Helm chart.',url:'https://helm.sh/docs/intro/install/'},
+{d:'Wed',t:'Write your own Helm chart',det:'Create a Helm chart for your app. Template values.yaml.',url:'https://helm.sh/docs/chart_template_guide/'},
+{d:'Thu',t:'Ingress controllers + routing rules',det:'Install nginx ingress. Route traffic to 2 services.',url:'https://kubernetes.io/docs/concepts/services-networking/ingress/'},
+{d:'Fri',t:'Review + deploy full app stack to K8s',det:'Deploy: frontend + backend + DB using Helm.',url:'https://github.com'},
+]},
+{label:'Week 16',topic:'Docker + K8s revision + portfolio',days:[
+{d:'Mon',t:'Kubernetes troubleshooting commands',det:'kubectl describe, logs, exec, events. Debug a broken pod.',url:'https://kubernetes.io/docs/tasks/debug/'},
+{d:'Tue',t:'Horizontal Pod Autoscaler (HPA)',det:'Configure HPA. Run load test to trigger scaling.',url:'https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/'},
+{d:'Wed',t:'K8s network policies',det:'Restrict pod-to-pod traffic using NetworkPolicy.',url:'https://kubernetes.io/docs/concepts/services-networking/network-policies/'},
+{d:'Thu',t:'Write Docker + K8s project README',det:'Document your full containerised project on GitHub.',url:'https://github.com'},
+{d:'Fri',t:'Phase 2 review + GitHub portfolio check',det:'Ensure: Dockerfile, Compose, K8s YAMLs, Helm chart all pushed.',url:'https://github.com'},
+]},
+]},
+
+{id:'p3',label:'Phase 3',name:'CI/CD — Jenkins & GitHub Actions',months:'Month 5–6 (Weeks 17–24)',color:'#BA7517',bg:'#FAEEDA',tc:'#633806',
+stats:['Jenkins pipelines','GitHub Actions','SonarQube','Nexus + Artifactory'],
+weeks:[
+{label:'Week 17',topic:'CI/CD concepts + Jenkins install',days:[
+{d:'Mon',t:'What is CI/CD + SDLC automation',det:'Watch TechWorld Nana Jenkins intro. Understand pipeline stages.',url:'https://www.youtube.com/watch?v=LFDrDnKPOTg'},
+{d:'Tue',t:'Install Jenkins on Ubuntu VM',det:'Install Jenkins via apt. Access web UI. Install plugins.',url:'https://www.jenkins.io/doc/book/installing/linux/'},
+{d:'Wed',t:'Jenkins freestyle job — first build',det:'Create freestyle job. Run a shell script. Check console.',url:'https://www.jenkins.io/doc/book/using/'},
+{d:'Thu',t:'Jenkins + Git integration',det:'Connect Jenkins to GitHub repo. Trigger build on push.',url:'https://www.jenkins.io/doc/book/pipeline/'},
+{d:'Fri',t:'KodeKloud Jenkins free lab',det:'Complete KodeKloud free Jenkins practice labs.',url:'https://kodekloud.com/courses/labs-jenkins/'},
+]},
+{label:'Week 18',topic:'Jenkins Declarative Pipelines',days:[
+{d:'Mon',t:'Jenkinsfile — Declarative Pipeline syntax',det:'Write Jenkinsfile with stages: Checkout, Build, Test.',url:'https://www.jenkins.io/doc/book/pipeline/syntax/'},
+{d:'Tue',t:'Jenkins Pipeline: environment vars + credentials',det:'Store secrets in Jenkins credentials store. Use in pipeline.',url:'https://www.jenkins.io/doc/book/pipeline/jenkinsfile/'},
+{d:'Wed',t:'Jenkins Pipeline: Docker agent',det:'Run pipeline stages inside a Docker container.',url:'https://www.jenkins.io/doc/book/pipeline/docker/'},
+{d:'Thu',t:'Jenkins Pipeline: parallel stages',det:'Run unit tests and linting in parallel stages.',url:'https://www.jenkins.io/doc/book/pipeline/syntax/#parallel'},
+{d:'Fri',t:'Jenkins multibranch pipeline',det:'Set up multibranch pipeline. Auto-detect feature branches.',url:'https://www.jenkins.io/doc/book/pipeline/multibranch/'},
+]},
+{label:'Week 19',topic:'Jenkins + Docker + K8s integration',days:[
+{d:'Mon',t:'Jenkins pipeline: build + push Docker image',det:'Pipeline: build image → tag with build number → push to Hub.',url:'https://www.jenkins.io/doc/book/pipeline/docker/'},
+{d:'Tue',t:'Jenkins pipeline: deploy to Kubernetes',det:'Use kubectl in Jenkins to deploy new image to K8s.',url:'https://github.com'},
+{d:'Wed',t:'SonarQube code quality analysis',det:'Install SonarQube. Integrate with Jenkins pipeline.',url:'https://www.sonarqube.org'},
+{d:'Thu',t:'Nexus artifact repository',det:'Install Nexus. Store Maven/npm artifacts. Pull in pipeline.',url:'https://www.sonatype.com/products/sonatype-nexus-oss'},
+{d:'Fri',t:'End-to-end Jenkins pipeline project',det:'Full pipeline: git push → build → test → sonar → docker → k8s.',url:'https://github.com'},
+]},
+{label:'Week 20',topic:'GitHub Actions CI/CD',days:[
+{d:'Mon',t:'GitHub Actions: triggers + jobs + steps',det:'Watch GitHub Actions tutorial. Understand YAML workflow.',url:'https://www.youtube.com/watch?v=R8_veQiYBjI'},
+{d:'Tue',t:'GitHub Actions: build + test workflow',det:'Create workflow: checkout → install → test → build.',url:'https://docs.github.com/en/actions/quickstart'},
+{d:'Wed',t:'GitHub Actions: Docker build + push',det:'Use docker/build-push-action to push image on merge.',url:'https://github.com/docker/build-push-action'},
+{d:'Thu',t:'GitHub Actions: deploy to K8s',det:'Use kubectl action to deploy to minikube on main merge.',url:'https://github.com/azure/k8s-deploy'},
+{d:'Fri',t:'GitHub Actions: secrets + environments',det:'Add staging and production environments. Protect prod.',url:'https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment'},
+]},
+{label:'Week 21',topic:'GitLab CI/CD',days:[
+{d:'Mon',t:'GitLab CI intro + .gitlab-ci.yml',det:'Create free GitLab account. Write first .gitlab-ci.yml.',url:'https://docs.gitlab.com/ee/ci/quick_start/'},
+{d:'Tue',t:'GitLab CI: stages, jobs, artifacts',det:'Multi-stage pipeline: build → test → package.',url:'https://docs.gitlab.com/ee/ci/yaml/'},
+{d:'Wed',t:'GitLab CI: Docker in Docker (DinD)',det:'Build and push Docker image inside GitLab CI.',url:'https://docs.gitlab.com/ee/ci/docker/using_docker_build.html'},
+{d:'Thu',t:'GitLab environments + manual deploy gates',det:'Add manual approval before production deploy.',url:'https://docs.gitlab.com/ee/ci/environments/'},
+{d:'Fri',t:'Compare Jenkins vs GitHub Actions vs GitLab',det:'Write a 1-page comparison. When to use each.',url:'https://github.com'},
+]},
+{label:'Week 22',topic:'Testing in CI/CD pipelines',days:[
+{d:'Mon',t:'Unit testing + pytest in pipeline',det:'Add pytest to your Python app. Run in GitHub Actions.',url:'https://docs.pytest.org'},
+{d:'Tue',t:'Integration testing in Docker Compose',det:'Run integration tests against a Compose environment in CI.',url:'https://docs.docker.com/compose/'},
+{d:'Wed',t:'SAST + DAST basics in pipeline',det:'Add Bandit (Python SAST) to pipeline. Review findings.',url:'https://bandit.readthedocs.io'},
+{d:'Thu',t:'Container image scanning in CI',det:'Add Trivy scan step to GitHub Actions. Fail on HIGH CVEs.',url:'https://github.com/aquasecurity/trivy-action'},
+{d:'Fri',t:'Notification: Slack + email on pipeline fail',det:'Add Slack webhook notification on build failure.',url:'https://api.slack.com/messaging/webhooks'},
+]},
+{label:'Week 23',topic:'CI/CD best practices + optimisation',days:[
+{d:'Mon',t:'Pipeline caching: Docker layers + npm/pip',det:'Add cache steps to GitHub Actions. Compare build times.',url:'https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows'},
+{d:'Tue',t:'Blue-Green deployments',det:'Implement blue-green switch in Kubernetes with kubectl.',url:'https://kubernetes.io/blog/2018/04/30/zero-downtime-deployment-kubernetes-update/'},
+{d:'Wed',t:'Canary deployments',det:'Deploy 10% canary using K8s deployment strategy.',url:'https://kubernetes.io/docs/concepts/workloads/controllers/deployment/'},
+{d:'Thu',t:'Rollback strategies in CI/CD',det:'Implement automatic rollback on failed health check.',url:'https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-back-a-deployment'},
+{d:'Fri',t:'Full CI/CD project — push to GitHub',det:'End-to-end: app → test → build → scan → deploy → rollback.',url:'https://github.com'},
+]},
+{label:'Week 24',topic:'CI/CD revision + portfolio',days:[
+{d:'Mon',t:'Document your Jenkins pipeline',det:'Add architecture diagram and explanation to GitHub README.',url:'https://github.com'},
+{d:'Tue',t:'Document your GitHub Actions workflow',det:'Write a blog-style explanation of your workflow.',url:'https://pages.github.com'},
+{d:'Wed',t:'KodeKloud: CI/CD challenge labs',det:'Complete any remaining KodeKloud CI/CD practice labs.',url:'https://kodekloud.com'},
+{d:'Thu',t:'Review and clean up all Phase 3 repos',det:'Ensure 3+ CI/CD pipelines visible and documented.',url:'https://github.com'},
+{d:'Fri',t:'Phase 3 review — fill knowledge gaps',det:'Can you build a pipeline from scratch in 30 min?',url:'https://github.com'},
+]},
+]},
+
+{id:'p4',label:'Phase 4',name:'Infrastructure as Code — Terraform & Ansible',months:'Month 7–8 (Weeks 25–32)',color:'#993C1D',bg:'#FAECE7',tc:'#4A1B0C',
+stats:['Terraform on AWS','Ansible playbooks','IaC best practices','State management'],
+weeks:[
+{label:'Week 25',topic:'Terraform fundamentals',days:[
+{d:'Mon',t:'What is IaC + Terraform intro',det:'Watch TechWorld Nana Terraform tutorial part 1.',url:'https://www.youtube.com/watch?v=l5k1ai_GBDE'},
+{d:'Tue',t:'Terraform install + first resource (AWS EC2)',det:'Install Terraform. Write main.tf to create EC2 instance.',url:'https://developer.hashicorp.com/terraform/tutorials/aws-get-started'},
+{d:'Wed',t:'Terraform plan + apply + destroy',det:'Understand the workflow. Inspect state file.',url:'https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-build'},
+{d:'Thu',t:'Terraform variables + outputs',det:'Parameterise with variables.tf. Add outputs for IP address.',url:'https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-variables'},
+{d:'Fri',t:'KodeKloud Terraform free lab',det:'Complete KodeKloud free Terraform practice labs.',url:'https://kodekloud.com/courses/labs-terraform-for-beginners/'},
+]},
+{label:'Week 26',topic:'Terraform — modules + state',days:[
+{d:'Mon',t:'Terraform modules: create + reuse',det:'Write a reusable VPC module. Use it in root module.',url:'https://developer.hashicorp.com/terraform/tutorials/modules/module'},
+{d:'Tue',t:'Terraform remote state — S3 backend',det:'Store tfstate in S3 + DynamoDB for locking.',url:'https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-remote'},
+{d:'Wed',t:'Terraform workspaces — dev/staging/prod',det:'Create dev and prod workspaces. Different variable sets.',url:'https://developer.hashicorp.com/terraform/cli/workspaces'},
+{d:'Thu',t:'Terraform for AWS VPC + subnets + SG',det:'Provision full VPC: public/private subnets, IGW, SG.',url:'https://registry.terraform.io/providers/hashicorp/aws/latest/docs'},
+{d:'Fri',t:'Terraform for EKS cluster',det:'Provision EKS using terraform-aws-modules/eks.',url:'https://registry.terraform.io/modules/terraform-aws-modules/eks/aws/latest'},
+]},
+{label:'Week 27',topic:'Terraform — CI/CD integration',days:[
+{d:'Mon',t:'Terraform in GitHub Actions pipeline',det:'Run terraform plan on PR, terraform apply on merge.',url:'https://developer.hashicorp.com/terraform/tutorials/automation/github-actions'},
+{d:'Tue',t:'Terraform Cloud free tier',det:'Connect repo to Terraform Cloud. Run plan remotely.',url:'https://app.terraform.io'},
+{d:'Wed',t:'Terraform import existing resources',det:'Import an existing AWS resource into Terraform state.',url:'https://developer.hashicorp.com/terraform/cli/import'},
+{d:'Thu',t:'Terraform best practices + security',det:'No hardcoded secrets. Use data sources. tflint checks.',url:'https://developer.hashicorp.com/terraform/language/style'},
+{d:'Fri',t:'Mini project: full AWS infra with Terraform',det:'EC2 + VPC + SG + S3 + outputs. Push to GitHub.',url:'https://github.com'},
+]},
+{label:'Week 28',topic:'Ansible fundamentals',days:[
+{d:'Mon',t:'What is Ansible + agentless architecture',det:'Watch TechWorld Nana Ansible intro.',url:'https://www.youtube.com/watch?v=1id6ERvfozo'},
+{d:'Tue',t:'Ansible install + inventory + first ping',det:'Install Ansible. Create inventory file. Ping 2 VMs.',url:'https://docs.ansible.com/ansible/latest/getting_started/'},
+{d:'Wed',t:'Ansible ad-hoc commands',det:'Run ad-hoc: install nginx, copy file, restart service.',url:'https://docs.ansible.com/ansible/latest/command_guide/intro_adhoc.html'},
+{d:'Thu',t:'Ansible playbooks — tasks + modules',det:'Write playbook to setup web server with nginx.',url:'https://docs.ansible.com/ansible/latest/playbook_guide/'},
+{d:'Fri',t:'KodeKloud Ansible free lab',det:'Complete KodeKloud free Ansible practice labs.',url:'https://kodekloud.com/courses/labs-ansible-for-the-absolute-beginner-hands-on/'},
+]},
+{label:'Week 29',topic:'Ansible — roles + variables + vault',days:[
+{d:'Mon',t:'Ansible variables + facts + register',det:'Use vars_files, gather_facts, register results.',url:'https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html'},
+{d:'Tue',t:'Ansible roles: structure + create role',det:'Create nginx role with tasks, templates, handlers.',url:'https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html'},
+{d:'Wed',t:'Ansible Vault — encrypt secrets',det:'Encrypt passwords in vault. Use in playbook.',url:'https://docs.ansible.com/ansible/latest/vault_guide/'},
+{d:'Thu',t:'Ansible conditionals + loops + tags',det:'Add when conditions, loop over users, use tags.',url:'https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_conditionals.html'},
+{d:'Fri',t:'Ansible: configure K8s nodes',det:'Write playbook to install Docker + K8s on fresh VMs.',url:'https://github.com'},
+]},
+{label:'Week 30',topic:'Terraform + Ansible together',days:[
+{d:'Mon',t:'Terraform provisions infra + Ansible configures it',det:'Terraform creates EC2. Ansible configures nginx on it.',url:'https://github.com'},
+{d:'Tue',t:'Dynamic inventory with Terraform + Ansible',det:'Use terraform output to generate Ansible inventory.',url:'https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-outputs'},
+{d:'Wed',t:'Full stack project: provision + configure + deploy',det:'Terraform infra → Ansible config → Docker app deploy.',url:'https://github.com'},
+{d:'Thu',t:'Ansible Galaxy: use community roles',det:'Install and use geerlingguy.nginx from Ansible Galaxy.',url:'https://galaxy.ansible.com'},
+{d:'Fri',t:'Document IaC project on GitHub',det:'Add architecture diagram, usage instructions, variables.',url:'https://github.com'},
+]},
+{label:'Week 31',topic:'Cloud — AWS core services',days:[
+{d:'Mon',t:'AWS free tier setup + IAM best practices',det:'Create IAM user, MFA, no root usage, least privilege.',url:'https://aws.amazon.com/free/'},
+{d:'Tue',t:'AWS EC2 + security groups + key pairs',det:'Launch EC2. Connect via SSH. Configure SG.',url:'https://docs.aws.amazon.com/ec2/'},
+{d:'Wed',t:'AWS S3 + lifecycle + versioning + policies',det:'Create S3 bucket. Enable versioning. Add lifecycle rule.',url:'https://docs.aws.amazon.com/s3/'},
+{d:'Thu',t:'AWS RDS + parameter groups',det:'Launch RDS MySQL free tier. Connect from EC2.',url:'https://docs.aws.amazon.com/rds/'},
+{d:'Fri',t:'AWS CloudWatch + alarms + logs',det:'Set CPU alarm on EC2. Ship logs to CloudWatch.',url:'https://docs.aws.amazon.com/cloudwatch/'},
+]},
+{label:'Week 32',topic:'IaC revision + portfolio',days:[
+{d:'Mon',t:'AWS VPC deep dive with Terraform',det:'Full VPC: public/private subnets, NAT gateway, IGW.',url:'https://github.com'},
+{d:'Tue',t:'AWS Lambda + API Gateway intro',det:'Deploy a Python Lambda function. Trigger via API Gateway.',url:'https://docs.aws.amazon.com/lambda/'},
+{d:'Wed',t:'Terraform + Ansible full project review',det:'Clean up code. Write comprehensive README.',url:'https://github.com'},
+{d:'Thu',t:'Phase 4 GitHub portfolio audit',det:'Ensure: Terraform modules, Ansible roles, AWS project visible.',url:'https://github.com'},
+{d:'Fri',t:'Phase 4 review — knowledge gap check',det:'Can you provision AWS infra from scratch in 1 hour?',url:'https://github.com'},
+]},
+]},
+
+{id:'p5',label:'Phase 5',name:'Monitoring, Kubernetes advanced & cloud certs',months:'Month 9–10 (Weeks 33–40)',color:'#185FA5',bg:'#E6F1FB',tc:'#042C53',
+stats:['Prometheus + Grafana','ELK stack','CKA prep','AWS Solutions Architect'],
+weeks:[
+{label:'Week 33',topic:'Prometheus + Grafana monitoring',days:[
+{d:'Mon',t:'What is observability: metrics, logs, traces',det:'Read Prometheus docs intro. Understand pull-based model.',url:'https://prometheus.io/docs/introduction/overview/'},
+{d:'Tue',t:'Install Prometheus + Node Exporter',det:'Install on VM. Scrape metrics. View in browser.',url:'https://prometheus.io/docs/prometheus/latest/getting_started/'},
+{d:'Wed',t:'Grafana install + connect to Prometheus',det:'Install Grafana. Add Prometheus datasource. First dashboard.',url:'https://grafana.com/docs/grafana/latest/getting-started/'},
+{d:'Thu',t:'PromQL queries — cpu, memory, disk',det:'Write 5 PromQL queries. Add to Grafana dashboard.',url:'https://prometheus.io/docs/prometheus/latest/querying/basics/'},
+{d:'Fri',t:'Grafana alerts + notification channels',det:'Set alert when CPU > 80%. Notify via email or Slack.',url:'https://grafana.com/docs/grafana/latest/alerting/'},
+]},
+{label:'Week 34',topic:'Prometheus in Kubernetes',days:[
+{d:'Mon',t:'Prometheus Operator + kube-prometheus-stack',det:'Deploy monitoring stack to K8s using Helm.',url:'https://github.com/prometheus-operator/kube-prometheus'},
+{d:'Tue',t:'K8s metrics: pod CPU, memory, restarts',det:'Build Grafana dashboard for pod health.',url:'https://grafana.com/grafana/dashboards/'},
+{d:'Wed',t:'Custom application metrics with client libs',det:'Add Prometheus Python client to Flask app. Expose /metrics.',url:'https://github.com/prometheus/client_python'},
+{d:'Thu',t:'Alertmanager: routes + receivers',det:'Configure Alertmanager. Route alerts to Slack channel.',url:'https://prometheus.io/docs/alerting/latest/alertmanager/'},
+{d:'Fri',t:'SLIs, SLOs, SLAs — define for your app',det:'Define 3 SLOs for your app. Build compliance dashboard.',url:'https://sre.google/sre-book/service-level-objectives/'},
+]},
+{label:'Week 35',topic:'ELK Stack — centralised logging',days:[
+{d:'Mon',t:'ELK intro: Elasticsearch, Logstash, Kibana',det:'Watch ELK stack intro. Understand log pipeline.',url:'https://www.elastic.co/what-is/elk-stack'},
+{d:'Tue',t:'Install ELK stack on VM',det:'Install all 3 components. Send sample logs.',url:'https://www.elastic.co/guide/en/elastic-stack/current/installing-elastic-stack.html'},
+{d:'Wed',t:'Filebeat + Logstash pipeline',det:'Ship nginx logs via Filebeat → Logstash → Elasticsearch.',url:'https://www.elastic.co/beats/filebeat'},
+{d:'Thu',t:'Kibana dashboards + visualisations',det:'Build dashboard: error rate, response times, top IPs.',url:'https://www.elastic.co/kibana'},
+{d:'Fri',t:'Loki + Promtail as lightweight alternative',det:'Deploy Loki stack on K8s. View logs in Grafana.',url:'https://grafana.com/oss/loki/'},
+]},
+{label:'Week 36',topic:'Advanced Kubernetes',days:[
+{d:'Mon',t:'K8s StatefulSets + DaemonSets',det:'Deploy MySQL as StatefulSet. Deploy log agent as DaemonSet.',url:'https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/'},
+{d:'Tue',t:'K8s Jobs + CronJobs',det:'Create a batch Job. Schedule a CronJob for DB backup.',url:'https://kubernetes.io/docs/concepts/workloads/controllers/job/'},
+{d:'Wed',t:'K8s cluster autoscaler + VPA',det:'Configure cluster autoscaler on cloud K8s. Understand VPA.',url:'https://github.com/kubernetes/autoscaler'},
+{d:'Thu',t:'K8s upgrade process + drain + cordon',det:'Practice node drain and cordon. Understand upgrade steps.',url:'https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/'},
+{d:'Fri',t:'CKA exam prep — killer.sh free session',det:'Attempt CKA practice questions on killer.sh free tier.',url:'https://killer.sh'},
+]},
+{label:'Week 37',topic:'CKA exam preparation',days:[
+{d:'Mon',t:'CKA domain 1: cluster architecture',det:'Study etcd backup/restore. Control plane components.',url:'https://kubernetes.io/docs/concepts/overview/components/'},
+{d:'Tue',t:'CKA domain 2: workloads + scheduling',det:'Taints, tolerations, affinity, resource limits.',url:'https://kubernetes.io/docs/concepts/scheduling-eviction/'},
+{d:'Wed',t:'CKA domain 3: services + networking',det:'CoreDNS, NetworkPolicy, service types deep dive.',url:'https://kubernetes.io/docs/concepts/services-networking/'},
+{d:'Thu',t:'CKA domain 4: storage + troubleshooting',det:'PV/PVC, StorageClass, kubectl debug techniques.',url:'https://kubernetes.io/docs/tasks/debug/'},
+{d:'Fri',t:'CKA full practice test — timed',det:'2 hours of CKA practice questions. Target 80%+.',url:'https://killer.sh'},
+]},
+{label:'Week 38',topic:'AWS Solutions Architect prep',days:[
+{d:'Mon',t:'AWS SAA-C03 study plan + free resources',det:'Start FreeCodeCamp AWS SAA free YouTube course.',url:'https://www.youtube.com/watch?v=c3Cn4xEfRte'},
+{d:'Tue',t:'AWS: compute — EC2, Lambda, ECS, EKS',det:'Study compute services. Compare when to use each.',url:'https://www.youtube.com/watch?v=c3Cn4xEfRte'},
+{d:'Wed',t:'AWS: storage — S3, EBS, EFS, Glacier',det:'Understand storage classes, durability, use cases.',url:'https://www.youtube.com/watch?v=c3Cn4xEfRte'},
+{d:'Thu',t:'AWS: networking — VPC, Route53, CloudFront',det:'Design a multi-AZ VPC with public/private subnets.',url:'https://www.youtube.com/watch?v=c3Cn4xEfRte'},
+{d:'Fri',t:'AWS: databases — RDS, DynamoDB, ElastiCache',det:'Understand managed DB options. Multi-AZ vs Read Replica.',url:'https://www.youtube.com/watch?v=c3Cn4xEfRte'},
+]},
+{label:'Week 39',topic:'GitOps + ArgoCD',days:[
+{d:'Mon',t:'What is GitOps + principles',det:'Read GitOps intro. Understand Git as single source of truth.',url:'https://www.gitops.tech'},
+{d:'Tue',t:'Install ArgoCD on K8s',det:'Install ArgoCD. Access UI. Connect to GitHub repo.',url:'https://argo-cd.readthedocs.io/en/stable/getting_started/'},
+{d:'Wed',t:'ArgoCD: deploy app from Git',det:'Create ArgoCD Application. Auto-sync on git push.',url:'https://argo-cd.readthedocs.io/en/stable/user-guide/'},
+{d:'Thu',t:'ArgoCD: rollback + health checks',det:'Trigger rollback from ArgoCD UI. Add custom health check.',url:'https://argo-cd.readthedocs.io/en/stable/operator-manual/health/'},
+{d:'Fri',t:'Full GitOps project: Terraform + ArgoCD',det:'Terraform provisions K8s. ArgoCD deploys app from Git.',url:'https://github.com'},
+]},
+{label:'Week 40',topic:'Portfolio + LinkedIn + job prep',days:[
+{d:'Mon',t:'GitHub portfolio audit — all 5 projects',det:'Ensure each project has: README, architecture, commands.',url:'https://github.com'},
+{d:'Tue',t:'Write blog: "How I built a CI/CD pipeline"',det:'Publish on GitHub Pages or Dev.to (free).',url:'https://dev.to'},
+{d:'Wed',t:'Write blog: "Terraform + Ansible on AWS"',det:'Second article. Shows depth in IaC.',url:'https://dev.to'},
+{d:'Thu',t:'LinkedIn update + apply to 5 DevOps roles',det:'Add all tools, projects, certs in progress.',url:'https://www.linkedin.com/jobs/'},
+{d:'Fri',t:'Top 20 DevOps interview questions — write answers',det:'Cover: CI/CD, Docker, K8s, Terraform, monitoring.',url:'https://github.com'},
+]},
+]},
+
+{id:'p6',label:'Phase 6',name:'Certifications + job hunt',months:'Month 11–12 (Weeks 41–48)',color:'#993556',bg:'#FBEAF0',tc:'#72243E',
+stats:['Sit CKA exam','AWS SAA exam','Aggressive applications','Interview prep'],
+weeks:[
+{label:'Week 41',topic:'CKA final preparation',days:[
+{d:'Mon',t:'CKA: etcd backup + restore practice',det:'Practice etcd snapshot and restore 5 times.',url:'https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/'},
+{d:'Tue',t:'CKA: RBAC + network policy practice',det:'5 RBAC scenarios. 3 NetworkPolicy exercises.',url:'https://kubernetes.io/docs/reference/access-authn-authz/rbac/'},
+{d:'Wed',t:'CKA: troubleshooting broken clusters',det:'Deliberately break and fix: kubelet, networking, storage.',url:'https://kubernetes.io/docs/tasks/debug/'},
+{d:'Thu',t:'CKA mock exam — killer.sh full simulation',det:'2 hour timed simulation. Target 80%+.',url:'https://killer.sh'},
+{d:'Fri',t:'CKA weak area revision only',det:'Only study what you got wrong. Do not re-read everything.',url:'https://kubernetes.io/docs/home/'},
+]},
+{label:'Week 42',topic:'SIT CKA EXAM this week',days:[
+{d:'Mon',t:'Light revision — imperative kubectl only',det:'Practice speed: create pod, deploy, expose in 1 min each.',url:'https://kubernetes.io/docs/reference/kubectl/quick-reference/'},
+{d:'Tue',t:'Rest + exam-day logistics check',det:'Check PSI Bridge environment. Test your webcam and ID.',url:'https://www.cncf.io/certification/cka/'},
+{d:'Wed',t:'SIT YOUR CKA EXAM',det:'You have 2 hours. Trust your 10 months of work.',url:'https://www.cncf.io/certification/cka/'},
+{d:'Thu',t:'Post-exam: start AWS SAA final prep',det:'Whether passed or not — continue forward.',url:'https://www.youtube.com/watch?v=c3Cn4xEfRte'},
+{d:'Fri',t:'AWS SAA: 50 practice questions timed',det:'ExamTopics free AWS SAA practice questions.',url:'https://www.examtopics.com/exams/amazon/aws-certified-solutions-architect-associate/'},
+]},
+{label:'Week 43',topic:'AWS SAA final preparation',days:[
+{d:'Mon',t:'AWS SAA: High availability + fault tolerance',det:'Multi-AZ, Auto Scaling, Route53 failover.',url:'https://www.youtube.com/watch?v=c3Cn4xEfRte'},
+{d:'Tue',t:'AWS SAA: Security + encryption',det:'KMS, IAM policies, SCP, Shield, WAF.',url:'https://www.youtube.com/watch?v=c3Cn4xEfRte'},
+{d:'Wed',t:'AWS SAA: Cost optimisation',det:'Reserved vs Spot vs On-demand. Trusted Advisor.',url:'https://www.youtube.com/watch?v=c3Cn4xEfRte'},
+{d:'Thu',t:'AWS SAA mock exam — 65 questions timed',det:'65 questions in 130 minutes. Target 80%+.',url:'https://www.examtopics.com/exams/amazon/aws-certified-solutions-architect-associate/'},
+{d:'Fri',t:'SIT YOUR AWS SAA EXAM',det:'Book and sit AWS SAA this week.',url:'https://aws.amazon.com/certification/certified-solutions-architect-associate/'},
+]},
+{label:'Week 44',topic:'Aggressive job applications',days:[
+{d:'Mon',t:'Apply to 15 DevOps engineer roles',det:'LinkedIn, Naukri, Indeed. Target: DevOps, SRE, Cloud Engineer.',url:'https://www.linkedin.com/jobs/'},
+{d:'Tue',t:'Reach out to 10 DevOps engineers on LinkedIn',det:'Message DevOps leads, SRE managers, hiring managers.',url:'https://www.linkedin.com'},
+{d:'Wed',t:'Apply to 10 more roles',det:'Focus on product companies, startups, consulting firms.',url:'https://www.naukri.com'},
+{d:'Thu',t:'Follow up on previous applications',det:'Email/message anyone who has not responded.',url:'https://www.linkedin.com'},
+{d:'Fri',t:'Refine CV + match job description keywords',det:'ATS optimisation: add keywords from top 10 JDs.',url:'https://github.com'},
+]},
+{label:'Week 45',topic:'Technical interview preparation',days:[
+{d:'Mon',t:'DevOps interview: CI/CD questions (20)',det:'Practice: explain your Jenkins pipeline end-to-end.',url:'https://github.com'},
+{d:'Tue',t:'DevOps interview: Docker + K8s questions',det:'Practice: how would you debug a CrashLoopBackOff?',url:'https://github.com'},
+{d:'Wed',t:'DevOps interview: Terraform + IaC questions',det:'Practice: how do you manage state in Terraform?',url:'https://github.com'},
+{d:'Thu',t:'DevOps interview: monitoring + incident questions',det:'Practice: walk me through an on-call incident response.',url:'https://github.com'},
+{d:'Fri',t:'Mock interview — record yourself on video',det:'10 technical + behavioural questions. Watch + improve.',url:'https://github.com'},
+]},
+{label:'Week 46',topic:'Continue applications + networking',days:[
+{d:'Mon',t:'Apply to 15 more roles',det:'Mix: junior and mid-level. Cast wide net.',url:'https://www.linkedin.com/jobs/'},
+{d:'Tue',t:'Prepare 5-min portfolio demo',det:'Walk through your best project: explain decisions made.',url:'https://github.com'},
+{d:'Wed',t:'Research 20 target companies',det:'Find companies using K8s, AWS, Terraform on LinkedIn.',url:'https://www.linkedin.com'},
+{d:'Thu',t:'Cold outreach to 10 DevOps managers',det:'Personalised message: mention their tech stack.',url:'https://www.linkedin.com'},
+{d:'Fri',t:'STAR method stories using IT manager experience',det:'Prepare 5 stories: automation, cost saving, incident, team, delivery.',url:'https://github.com'},
+]},
+{label:'Week 47',topic:'Final skills polish',days:[
+{d:'Mon',t:'Complete one more K8s challenge on killer.sh',det:'Document and add to GitHub.',url:'https://killer.sh'},
+{d:'Tue',t:'Set up a personal DevOps home lab project',det:'Full stack: Terraform + K8s + CI/CD + Grafana on AWS.',url:'https://github.com'},
+{d:'Wed',t:'Update LinkedIn with CKA + AWS SAA badges',det:'Add certifications. Update headline to DevOps Engineer.',url:'https://www.linkedin.com'},
+{d:'Thu',t:'Request LinkedIn recommendations',det:'Ask colleagues about your IT automation and infra work.',url:'https://www.linkedin.com'},
+{d:'Fri',t:'Review + celebrate — you are a DevOps engineer',det:'From IT Manager to certified DevOps. Keep applying.',url:'https://github.com'},
+]},
+{label:'Week 48',topic:'Final week — land the job',days:[
+{d:'Mon',t:'Apply to 20 roles — final push',det:'Maximum volume. Junior to mid DevOps, SRE, Cloud Engineer.',url:'https://www.linkedin.com/jobs/'},
+{d:'Tue',t:'Follow up on all open applications',det:'Email every company applied to in last 4 weeks.',url:'https://www.linkedin.com'},
+{d:'Wed',t:'Offer evaluation criteria',det:'Salary, cloud stack, K8s usage, remote policy, growth path.',url:'https://github.com'},
+{d:'Thu',t:'Final technical prep — 10 hardest questions',det:'Answer questions you have struggled with most.',url:'https://github.com'},
+{d:'Fri',t:'You have completed the 12-month DevOps plan',det:'CKA done. AWS SAA done. Portfolio done. Job hunt active. You did it.',url:'https://github.com'},
+]},
+]},
+];
+
+const completed=JSON.parse(localStorage.getItem('devops_v1')||'{}');
+let cp=0,open={},syncState='idle';
+
+function totalDays(){return PHASES.reduce((s,p)=>s+p.weeks.reduce((a,w)=>a+w.days.length,0),0);}
+function doneCount(){return Object.values(completed).filter(Boolean).length;}
+function key(pi,wi,di){return `${pi}_${wi}_${di}`;}
+
+async function saveToSheet(k,pi,wi,di,done){
+  syncState='saving';render();
+  try{
+    const url=`${SCRIPT_URL}?action=set&key=${encodeURIComponent(k)}&phase=${pi}&week=${wi}&day=${di}&done=${done}`;
+    await Promise.race([fetch(url).then(r=>r.json()),new Promise((_,rej)=>setTimeout(()=>rej(),8000))]);
+    syncState='ok';
+  }catch(e){syncState='err';}
+  render();
+}
+
+async function loadFromSheet(){
+  syncState='loading';render();
+  try{
+    const data=await Promise.race([
+      fetch(SCRIPT_URL+'?action=getAll').then(r=>r.json()),
+      new Promise((_,rej)=>setTimeout(()=>rej(),8000))
+    ]);
+    Object.assign(completed,data||{});
+    localStorage.setItem('devops_v1',JSON.stringify(completed));
+    syncState='ok';
+  }catch(e){syncState='err';}
+  render();
+}
+
+async function toggleDone(pi,wi,di,e){
+  e.stopPropagation();
+  const k=key(pi,wi,di);
+  completed[k]=!completed[k];
+  try{localStorage.setItem('devops_v1',JSON.stringify(completed));}catch(e2){}
+  await saveToSheet(k,pi,wi,di,completed[k]);
+}
+
+function toggleWeek(wi){open[`${cp}_${wi}`]=!open[`${cp}_${wi}`];render();}
+
+function render(){
+  const p=PHASES[cp];
+  const total=totalDays();
+  const done=doneCount();
+  const pct=Math.round(done/total*100);
+  const syncLabel=syncState==='loading'?'Loading from Google Sheets…':syncState==='saving'?'Saving…':syncState==='ok'?'Synced to Google Sheets':syncState==='err'?'Offline — saved locally':'';
+  const syncColor=syncState==='ok'?'#3B6D11':syncState==='err'?'#BA7517':'#5f5e5a';
+  const syncBg=syncState==='ok'?'#eaf3de':syncState==='err'?'#faeeda':'#f5f5f0';
+
+  let h='<h1>DevOps Engineer — 12 Month Plan</h1>';
+  h+='<div class="subtitle">Weekdays only · 1.5 hrs/day · 100% free resources · Linux → Docker → K8s → CI/CD → Terraform → CKA + AWS SAA</div>';
+  if(syncLabel) h+=`<div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 10px;border-radius:8px;margin-bottom:12px;background:${syncBg};color:${syncColor}"><span style="width:7px;height:7px;border-radius:50%;background:${syncColor};display:inline-block"></span>${syncLabel}</div>`;
+
+  h+=`<div class="progress-wrap"><div class="progress-label"><span>${done} of ${total} days completed</span><span>${pct}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${p.color}"></div></div></div>`;
+
+  h+=`<div class="top-bar">`;
+  PHASES.forEach((ph,i)=>{h+=`<span class="phase-pill ${ph.id}${i===cp?' active':''}" onclick="setPhase(${i})">${ph.label}</span>`;});
+  h+=`</div>`;
+
+  h+=`<div class="phase-hero" style="background:${p.bg};border-color:${p.color}33">`;
+  h+=`<div class="phase-hero-title" style="color:${p.color}">${p.name}</div>`;
+  h+=`<div class="phase-hero-meta" style="color:${p.tc}">${p.months}</div>`;
+  h+=`<div class="stats-row">`;
+  p.stats.forEach(s=>{h+=`<span class="stat-chip" style="background:${p.color}22;color:${p.tc}">${s}</span>`;});
+  h+=`</div></div>`;
+
+  h+=`<div class="weeks-grid">`;
+  p.weeks.forEach((w,wi)=>{
+    const isOpen=!!open[`${cp}_${wi}`];
+    const weekDone=w.days.filter((_,di)=>completed[key(cp,wi,di)]).length;
+    h+=`<div class="week-block"><div class="week-header-row" onclick="toggleWeek(${wi})">`;
+    h+=`<div><div class="week-title">${w.label} — ${w.topic}</div><div class="week-subtitle">${weekDone}/${w.days.length} days done</div></div>`;
+    h+=`<span class="week-toggle">${isOpen?'▲':'▼'}</span></div>`;
+    h+=`<div class="days-list${isOpen?' open':''}">`;
+    w.days.forEach((d,di)=>{
+      const k=key(cp,wi,di);
+      const isDone=!!completed[k];
+      h+=`<div class="day-item" style="opacity:${isDone?0.5:1}">`;
+      h+=`<div class="day-label">${d.d}</div>`;
+      h+=`<div><div class="day-topic">${d.t}</div><div class="day-detail">${d.det}</div><a class="day-link" href="${d.url}" target="_blank">Open resource →</a></div>`;
+      h+=`<div><button class="done-btn${isDone?' done':''}" onclick="toggleDone(${cp},${wi},${di},event)">${isDone?'Done':'Mark done'}</button></div>`;
+      h+=`</div>`;
+    });
+    h+=`</div></div>`;
+  });
+  h+=`</div>`;
+  document.getElementById('app').innerHTML=h;
+}
+
+function setPhase(i){cp=i;open={};render();}
+loadFromSheet();
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}</script>
+</body>
+</html>
